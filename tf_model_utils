@@ -124,7 +124,7 @@ def tf2Mod2TeX(model, modelName='unknown', modelLabel='unknown',
                 len(col_keys), ' '.join(stringlist[ix]))
         ix += 1+new_line
     prefix = ["\\begin{table}[]", "\\begin{tabular}{%s}"%('l'*len(col_keys))]
-    suffix = ["\end{tabular}", "\caption{{Model summary for %s.}}"%modelName, "\label{tab:%s-model-summary}"%modelLabel , "\end{table}"]
+    suffix = ["\end{tabular}", "\caption{{Model summary of %s.}}"%modelName, "\label{tab:%s-model-summary}"%modelLabel , "\end{table}"]
     stringlist = prefix + ['\\toprule'] + stringlist[:-1] + ['\\bottomrule'] + suffix 
     out_str = "\n".join(stringlist)
     out_str = out_str.replace("_", "\_")
