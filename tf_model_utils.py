@@ -1,8 +1,49 @@
-import numpy as np
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 24 15:06:05 2023
 
-def tf2Mod2TeX(model, modelName='unknown', modelLabel='unknown',
-               col_keys=['Layer (type)', 'Output Shape', 
-                         "Param #", 'Connected to'], 
+@author: Denis
+"""
+import numpy as np
+import tensorflow as tf
+
+def get_sequential_state(model):
+    if model.__class__.__name__ == "Sequential":
+        return True
+    elif not model._is_graph_network:
+        # We treat subclassed models as a simple sequence of layers, for logging
+        # purposes.
+        return True
+    else:
+        sequential_like = True
+        nodes_by_depth = model._nodes_by_depth.values()
+        nodes = []
+        for v in nodes_by_depth:
+            if (len(v) > 1) or (
+                len(v) == 1 and len(tf.nest.flatten(v[0].keras_inputs)) > 1
+            ):
+                # if the model has multiple nodes
+                # or if the nodes have multiple inbound_layers
+                # the model is no longer sequential
+                sequential_like = False
+                break
+            nodes += v
+        if sequential_like:
+            # search for shared layers
+            for layer in model.layers:
+                flag = False
+                for node in layer._inbound_nodes:
+                    if node in nodes:
+                        if flag:
+                            sequential_like = False
+                            break
+                        else:
+                            flag = True
+                if not sequential_like:
+                    break
+        return sequential_like
+
+def tf2Mod2TeX(model, modelName='unknown', modelLabel='unknown', 
                char_dbl='=', lay_line_sep='empty'):
     """
     Parameters
@@ -35,6 +76,12 @@ def tf2Mod2TeX(model, modelName='unknown', modelLabel='unknown',
     """
     stringlist = []
     model.summary(line_length=150, print_fn=lambda x: stringlist.append(x))
+    if get_sequential_state(model):
+        col_keys = ['Layer (type)', 'Output Shape', 
+                    "Param #"]
+    else:
+        col_keys = ['Layer (type)', 'Output Shape', 
+                    "Param #", 'Connected to']
     col_format = False
     count_dbl = 0
     stringlist[0] = stringlist[0].split(':')
